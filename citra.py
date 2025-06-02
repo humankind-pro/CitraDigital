@@ -22,7 +22,7 @@ class ImageProcessorApp:
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
-        tk.Button(button_frame, text="Buka Gambar").grid(row=0, column=0, padx=5)
+        tk.Button(button_frame, text="Buka Gambar", command=self.load_image).grid(row=0, column=0, padx=5)
 
 
         # Frame tampilan gambar
@@ -32,8 +32,6 @@ class ImageProcessorApp:
         self.original_label = tk.Label(self.image_frame, text="Gambar Asli")
         self.original_label.grid(row=0, column=0)
 
-        self.processed_label = tk.Label(self.image_frame, text="Gambar Hasil")
-        self.processed_label.grid(row=0, column=1)
 
         self.original_canvas = tk.Label(self.image_frame)
         self.original_canvas.grid(row=1, column=0)
@@ -41,7 +39,20 @@ class ImageProcessorApp:
         self.processed_canvas = tk.Label(self.image_frame)
         self.processed_canvas.grid(row=1, column=1)
 
-    
+    def load_image(self):
+        path = filedialog.askopenfilename()
+        if not path:
+            return
+        self.original_image = cv2.imread(path)
+        self.display_image(self.original_image, self.original_canvas)
+
+    def display_image(self, image, canvas):
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_pil = Image.fromarray(image_rgb)
+        image_pil = image_pil.resize((400, 300))
+        photo = ImageTk.PhotoImage(image_pil)
+        canvas.image = photo
+        canvas.config(image=photo)
 
 
 
