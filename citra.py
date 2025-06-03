@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import cv2
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 class ImageProcessorApp:
     def __init__(self, root):
@@ -39,17 +40,22 @@ class ImageProcessorApp:
         self.btn_reset = tk.Button(basic_op_frame, text="Reset Gambar", command=self.reset_image, width=22, bg='#f44336', fg='white', font=('Arial', 9))
         self.btn_reset.grid(row=3, column=0, pady=5, padx=5)
 
-        processing_op_frame = tk.LabelFrame(controls_frame, text="Pemrosesan Citra", font=('Arial', 10, 'bold'), bg='#f0f0f0')
+        processing_op_frame = tk.LabelFrame(controls_frame, text="Pemrosesan Citra", 
+                                          font=('Arial', 10, 'bold'), bg='#f0f0f0')
         processing_op_frame.grid(row=0, column=1, padx=10, pady=5, sticky="ns")
-
-        self.btn_grayscale = tk.Button(processing_op_frame, text="Grayscale", command=self.convert_to_grayscale, width=22, bg='#9C27B0', fg='white', font=('Arial', 9))
-        self.btn_grayscale.grid(row=0, column=0, pady=3, padx=5)
-        self.btn_binary = tk.Button(processing_op_frame, text="Citra Biner", command=self.convert_to_binary, width=22, bg='#607D8B', fg='white', font=('Arial', 9))
-        self.btn_binary.grid(row=1, column=0, pady=3, padx=5)
-        self.btn_brighten = tk.Button(processing_op_frame, text="Tambah Kecerahan", command=self.arithmetic_addition, width=22, bg='#795548', fg='white', font=('Arial', 9))
-        self.btn_brighten.grid(row=2, column=0, pady=3, padx=5)
-        self.btn_darken = tk.Button(processing_op_frame, text="Kurangi Kecerahan", command=self.arithmetic_subtraction, width=22, bg='#3F51B5', fg='white', font=('Arial', 9))
-        self.btn_darken.grid(row=3, column=0, pady=3, padx=5)
+        
+        tk.Button(processing_op_frame, text="Grayscale", command=self.convert_to_grayscale, 
+                 width=22, bg='#9C27B0', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(processing_op_frame, text="Citra Biner", command=self.convert_to_binary, 
+                 width=22, bg='#607D8B', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(processing_op_frame, text="Tambah Kecerahan", command=self.arithmetic_addition, 
+                 width=22, bg='#795548', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(processing_op_frame, text="Kurangi Kecerahan", command=self.arithmetic_subtraction, 
+                 width=22, bg='#3F51B5', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(processing_op_frame, text="Erosi", command=self.morphological_erosion, 
+                 width=22, bg='#FF9800', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(processing_op_frame, text="Tampilkan Histogram", command=self.show_histogram, 
+                 width=22, bg='#FF5722', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
 
         logic_op_frame = tk.LabelFrame(controls_frame, text="Operasi Logika", font=('Arial', 10, 'bold'), bg='#f0f0f0')
         logic_op_frame.grid(row=0, column=2, padx=10, pady=5, sticky="ns")
@@ -62,6 +68,20 @@ class ImageProcessorApp:
         self.btn_or.grid(row=2, column=0, pady=3, padx=5)
         self.btn_xor = tk.Button(logic_op_frame, text="XOR (Dua Gambar)", command=self.logic_xor_operation, width=22, bg='#673AB7', fg='white', font=('Arial', 9))
         self.btn_xor.grid(row=3, column=0, pady=3, padx=5)
+
+        # --- Tombol Filter ---
+        filter_op_frame = tk.LabelFrame(controls_frame, text="Filter & Efek", 
+                                      font=('Arial', 10, 'bold'), bg='#f0f0f0')
+        filter_op_frame.grid(row=0, column=3, padx=10, pady=5, sticky="ns")
+
+        tk.Button(filter_op_frame, text="Blur", command=self.apply_blur, 
+                 width=22, bg='#8BC34A', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(filter_op_frame, text="Sharpen", command=self.apply_sharpen, 
+                 width=22, bg='#CDDC39', fg='black', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(filter_op_frame, text="Edge Detection", command=self.edge_detection, 
+                 width=22, bg='#FFC107', fg='black', font=('Arial', 9)).pack(pady=3, padx=5)
+        tk.Button(filter_op_frame, text="Histogram Equalization", command=self.histogram_equalization, 
+                 width=22, bg='#FF9800', fg='white', font=('Arial', 9)).pack(pady=3, padx=5)
 
         self.image_frame = tk.Frame(main_frame, bg='#f0f0f0')
         self.image_frame.pack(pady=10, padx=10, fill="both", expand=True)
@@ -282,6 +302,51 @@ class ImageProcessorApp:
             messagebox.showerror("Error", f"Gagal mengkonversi ke biner: {str(e)}")
             self.update_status("Gagal mengkonversi ke biner.")
 
+    def morphological_erosion(self):
+        if not self._check_image_loaded():
+            return
+        try:
+            # Definisikan elemen penstruktur (SE)
+            se1 = np.array([[1, 1, 1],
+                            [1, 1, 1],
+                            [1, 1, 1]], dtype=np.uint8)  # SE 1: Persegi 3x3
+            se2 = np.array([[0, 1, 0],
+                            [1, 1, 1],
+                            [0, 1, 0]], dtype=np.uint8)  # SE 2: Disk radius 1
+            
+            # Lakukan erosi dengan kedua elemen penstruktur
+            eroded_image1 = cv2.erode(self.original_image, se1)
+            eroded_image2 = cv2.erode(self.original_image, se2)
+            # Gabungkan hasil erosi
+            self.processed_image = cv2.bitwise_or(eroded_image1, eroded_image2)
+            # Tampilkan gambar hasil
+            self.display_image(self.processed_image, self.processed_panel)
+            self.update_status("Operasi erosi selesai")
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal melakukan operasi erosi: {str(e)}")
+
+        # Tambahkan metode show_histogram di sini
+    def show_histogram(self):
+        """Tampilkan histogram dari gambar asli"""
+        if not self._check_image_loaded():
+            return
+        try:
+            # Hitung histogram untuk setiap channel (B, G, R)
+            colors = ('b', 'g', 'r')
+            plt.figure(figsize=(10, 5))
+            for i, color in enumerate(colors):
+                hist = cv2.calcHist([self.original_image], [i], None, [256], [0, 256])
+                plt.plot(hist, color=color)
+                plt.xlim([0, 256])
+            plt.title('Histogram Gambar')
+            plt.xlabel('Intensitas Pixel')
+            plt.ylabel('Jumlah Pixel')
+            plt.legend(['B', 'G', 'R'])
+            plt.show()
+            self.update_status("Histogram ditampilkan")
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal menampilkan histogram: {str(e)}")
+
     def arithmetic_addition(self):
         if not self._check_image_loaded():
             return
@@ -375,6 +440,104 @@ class ImageProcessorApp:
     def on_closing(self):
         if messagebox.askokcancel("Keluar", "Apakah Anda yakin ingin keluar?"):
             self.root.destroy()
+
+   # === FILTER DAN EFEK TAMBAHAN ===
+
+    def apply_blur(self):
+        """Aplikasikan filter blur"""
+        if not self._check_image_loaded():
+            return
+        
+        try:
+            kernel_str = simpledialog.askstring(
+                "Input Kernel Size", 
+                "Masukkan ukuran kernel blur (5, 15, 25, default: 15):",
+                parent=self.root
+            )
+            
+            if kernel_str is None:
+                return
+                
+            try:
+                kernel_size = int(kernel_str) if kernel_str else 15
+                # Pastikan kernel size ganjil dan positif
+                kernel_size = max(3, kernel_size)
+                if kernel_size % 2 == 0:
+                    kernel_size += 1
+            except ValueError:
+                kernel_size = 15
+
+            blurred_image = cv2.GaussianBlur(self.original_image, (kernel_size, kernel_size), 0)
+            self.processed_image = blurred_image
+            self.display_image(self.processed_image, self.processed_panel)
+            
+            self.update_status(f"Filter blur diterapkan (kernel: {kernel_size}x{kernel_size})")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal menerapkan blur: {str(e)}")
+
+    def apply_sharpen(self):
+        """Aplikasikan filter sharpen"""
+        if not self._check_image_loaded():
+            return
+        
+        try:
+            # Kernel untuk sharpening
+            kernel = np.array([[-1,-1,-1],
+                             [-1, 9,-1],
+                             [-1,-1,-1]])
+            
+            sharpened_image = cv2.filter2D(self.original_image, -1, kernel)
+            self.processed_image = sharpened_image
+            self.display_image(self.processed_image, self.processed_panel)
+            
+            self.update_status("Filter sharpen diterapkan")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal menerapkan sharpen: {str(e)}")
+
+    def edge_detection(self):
+        """Deteksi tepi menggunakan Canny"""
+        if not self._check_image_loaded():
+            return
+        
+        try:
+            gray = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 100, 200)
+            
+            # Konversi ke BGR untuk konsistensi
+            edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+            
+            self.processed_image = edges_bgr
+            self.display_image(self.processed_image, self.processed_panel)
+            
+            self.update_status("Deteksi tepi (Canny) selesai")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal melakukan deteksi tepi: {str(e)}")
+
+    def histogram_equalization(self):
+        """Histogram equalization untuk peningkatan kontras"""
+        if not self._check_image_loaded():
+            return
+        
+        try:
+            # Konversi ke YUV
+            yuv = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2YUV)
+            
+            # Equalkan channel Y (luminance)
+            yuv[:,:,0] = cv2.equalizeHist(yuv[:,:,0])
+            
+            # Konversi kembali ke BGR
+            equalized = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+            
+            self.processed_image = equalized
+            self.display_image(self.processed_image, self.processed_panel)
+            
+            self.update_status("Histogram equalization selesai")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal melakukan histogram equalization: {str(e)}")
 
 if __name__ == "__main__":
     root = tk.Tk()
