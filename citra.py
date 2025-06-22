@@ -11,7 +11,7 @@ import matplotlib.style as style
 class ImageProcessorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Aplikasi Pengolahan Citra Digital - Versi Profesional")
+        self.root.title("Aplikasi Pengolahan Citra Digital - F.A.I.T Vision")
         self.root.geometry("1400x900")
         self.root.configure(bg='#1e1e2e')
         self.root.state('zoomed')  # Maximized window
@@ -211,7 +211,8 @@ class ImageProcessorApp:
         
         buttons = [
             ("📐 Edge Detection", self.edge_detection, '#6B728E'),
-            ("⚫ Erosi", self.morphological_erosion, '#6B728E')
+            ("⚫ Erosi (Persegi 3x3)", self.erosion_square, '#6B728E'),
+            ("⚫ Erosi (Silang 3x3)", self.erosion_cross, '#6B728E')
         ]
         
         for text, command, color in buttons:
@@ -317,7 +318,7 @@ class ImageProcessorApp:
         status_frame.pack_propagate(False)
         
         self.status_var = tk.StringVar()
-        self.status_var.set("🟢 IK23-C - Aplikasi Pengolahan Citra Digital")
+        self.status_var.set("🟢 IK23-C - F.A.I.T Vision")
         
         status_label = tk.Label(
             status_frame,
@@ -374,6 +375,42 @@ class ImageProcessorApp:
             return False
         return True
     
+    def erosion_square(self):
+        """Erosi dengan Structuring Element berbentuk kotak 3x3"""
+        if not self._check_image_loaded():
+            return
+        try:
+            # Define SE square 3x3
+            kernel = np.ones((3, 3), np.uint8)
+            # Apply erosion
+            if len(self.original_image.shape) == 3:  # Jika gambar berwarna
+                eroded = cv2.erode(self.original_image, kernel, iterations=1)
+            else:  # Jika grayscale
+                eroded = cv2.erode(self.original_image, kernel, iterations=1)
+            self.processed_image = eroded
+            self.display_image(eroded, self.processed_panel)
+            self.update_status("✅ Erosi (Square 3x3) selesai")
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal melakukan erosi:\n{str(e)}")
+
+    def erosion_cross(self):
+        """Erosi dengan Structuring Element berbentuk silang 3x3"""
+        if not self._check_image_loaded():
+            return
+        try:
+            # Define SE cross 3x3
+            kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+            # Apply erosion
+            if len(self.original_image.shape) == 3:  # Jika gambar berwarna
+                eroded = cv2.erode(self.original_image, kernel, iterations=1)
+            else:  # Jika grayscale
+                eroded = cv2.erode(self.original_image, kernel, iterations=1)
+            self.processed_image = eroded
+            self.display_image(eroded, self.processed_panel)
+            self.update_status("✅ Erosi (Cross 3x3) selesai")
+        except Exception as e:
+            messagebox.showerror("Error", f"Gagal melakukan erosi:\n{str(e)}")
+
     def _check_two_images_loaded(self):
         """Check if both images are loaded"""
         if self.original_image is None or self.second_image is None:
