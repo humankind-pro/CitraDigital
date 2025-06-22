@@ -178,8 +178,7 @@ class ImageProcessorApp:
             ("⚫ Citra Biner", self.convert_to_binary, '#6c7086'),
             ("⚫ Operasi Aritmatika (Tambah Kecerahan)", self.arithmetic_addition, '#6c7086'),
             ("⚫ Operasi Logika (AND)", self.logic_and_operation, "#6c7086"),
-            ("⚫ Erosi", self.morphological_erosion, '#6c7086'),
-            ("⚫ Histogram", self.show_histogram, '#6c7086')
+            ("⚫ Histogram (Gambar Input)", self.show_histogram, '#6c7086')
         ]
         
         for text, command, color in buttons:
@@ -211,7 +210,8 @@ class ImageProcessorApp:
         frame.grid(row=0, column=2, padx=10, pady=5, sticky="nsew")
         
         buttons = [
-            ("📐 Edge Detection", self.edge_detection, '#6B728E')
+            ("📐 Edge Detection", self.edge_detection, '#6B728E'),
+            ("⚫ Erosi", self.morphological_erosion, '#6B728E')
         ]
         
         for text, command, color in buttons:
