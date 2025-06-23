@@ -211,8 +211,8 @@ class ImageProcessorApp:
         
         buttons = [
             ("📐 Edge Detection", self.edge_detection, '#6B728E'),
-            ("⚫ Erosi (Persegi 3x3)", self.erosion_square, '#6B728E'),
-            ("⚫ Erosi (Silang 3x3)", self.erosion_cross, '#6B728E')
+            ("⚫ Dilasi Diagonal", self.dilation_diagonal, '#6B728E'),
+            ("⚫ Dilasi Persegi", self.dilation_horizontal, '#6B728E')
         ]
         
         for text, command, color in buttons:
@@ -375,41 +375,59 @@ class ImageProcessorApp:
             return False
         return True
     
-    def erosion_square(self):
-        """Erosi dengan Structuring Element berbentuk kotak 3x3"""
+    def dilation_diagonal(self):
+        """Dilasi dengan Structuring Element berbentuk diagonal"""
         if not self._check_image_loaded():
             return
         try:
-            # Define SE square 3x3
-            kernel = np.ones((3, 3), np.uint8)
-            # Apply erosion
-            if len(self.original_image.shape) == 3:  # Jika gambar berwarna
-                eroded = cv2.erode(self.original_image, kernel, iterations=1)
-            else:  # Jika grayscale
-                eroded = cv2.erode(self.original_image, kernel, iterations=1)
-            self.processed_image = eroded
-            self.display_image(eroded, self.processed_panel)
-            self.update_status("✅ Erosi (Square 3x3) selesai")
+            # Convert to grayscale and threshold if needed
+            if len(self.original_image.shape) == 3:
+                gray = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
+                _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+            else:
+                _, binary = cv2.threshold(self.original_image, 127, 255, cv2.THRESH_BINARY)
+            
+            # Define diagonal kernel
+            kernel_diag = np.array([[1, 0, 1], 
+                                [0, 1, 0], 
+                                [1, 0, 1]], dtype=np.uint8)
+            
+            # Apply dilation
+            dilated = cv2.dilate(binary, kernel_diag, iterations=1)
+            
+            self.processed_image = dilated
+            self.display_image(dilated, self.processed_panel)
+            self.update_status("✅ Dilasi dengan kernel diagonal selesai")
+            
         except Exception as e:
-            messagebox.showerror("Error", f"Gagal melakukan erosi:\n{str(e)}")
+            messagebox.showerror("Error", f"Gagal melakukan dilasi diagonal:\n{str(e)}")
 
-    def erosion_cross(self):
-        """Erosi dengan Structuring Element berbentuk silang 3x3"""
+    def dilation_horizontal(self):
+        """Dilasi dengan Structuring Element berbentuk horizontal"""
         if not self._check_image_loaded():
             return
         try:
-            # Define SE cross 3x3
-            kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-            # Apply erosion
-            if len(self.original_image.shape) == 3:  # Jika gambar berwarna
-                eroded = cv2.erode(self.original_image, kernel, iterations=1)
-            else:  # Jika grayscale
-                eroded = cv2.erode(self.original_image, kernel, iterations=1)
-            self.processed_image = eroded
-            self.display_image(eroded, self.processed_panel)
-            self.update_status("✅ Erosi (Cross 3x3) selesai")
+            # Convert to grayscale and threshold if needed
+            if len(self.original_image.shape) == 3:
+                gray = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
+                _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+            else:
+                _, binary = cv2.threshold(self.original_image, 127, 255, cv2.THRESH_BINARY)
+            
+            # Define horizontal kernel
+            kernel_horizontal = np.array([[0, 0, 0], 
+                                        [1, 1, 1], 
+                                        [0, 0, 0]], dtype=np.uint8)
+            
+            # Apply dilation
+            dilated = cv2.dilate(binary, kernel_horizontal, iterations=1)
+            
+            self.processed_image = dilated
+            self.display_image(dilated, self.processed_panel)
+            self.update_status("✅ Dilasi dengan kernel horizontal selesai")
+            
         except Exception as e:
-            messagebox.showerror("Error", f"Gagal melakukan erosi:\n{str(e)}")
+            messagebox.showerror("Error", f"Gagal melakukan dilasi horizontal:\n{str(e)}")
 
     def _check_two_images_loaded(self):
         """Check if both images are loaded"""
