@@ -212,7 +212,7 @@ class ImageProcessorApp:
         buttons = [
             ("📐 Edge Detection", self.edge_detection, '#6B728E'),
             ("⚫ Dilasi Diagonal", self.dilation_diagonal, '#6B728E'),
-            ("⚫ Dilasi Persegi", self.dilation_horizontal, '#6B728E')
+            ("⚫ Dilasi Horizontal", self.dilation_horizontal, '#6B728E')
         ]
         
         for text, command, color in buttons:
